@@ -2,9 +2,10 @@ const { Schema, model } = require('mongoose');
 
 const UserSchema = new Schema({
 	email: String,
-	username: String,
+	name: String,
 	password: String,
-	dateJoined: { type: Date, default: Date.now },
+	createdAt: { type: Date, default: Date.now },
+	updatedAt: { type: Date, default: Date.now },
 });
 
 module.exports = model('User', UserSchema);
