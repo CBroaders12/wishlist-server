@@ -113,4 +113,16 @@ UserRouter.post('/login', async (req, res) => {
 	}
 });
 
+// ! This needs to go behind middleware
+/* Reset Password
+	Method: PUT,
+	Route: /:id,
+	Request: {
+		token,
+		password,
+		email,
+	}
+*/
+UserRouter.patch('/password', (req, res) => {});
+
 module.exports = UserRouter;
