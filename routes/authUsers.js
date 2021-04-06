@@ -11,7 +11,7 @@ AuthUserRouter.get('/', (req, res) => {
 	});
 });
 
-/* Password update
+/* Update password
 	Method: PATCH
 	Route: /password
 	request: {
@@ -22,11 +22,11 @@ AuthUserRouter.get('/', (req, res) => {
 AuthUserRouter.patch('/updatepassword', async (req, res) => {
 	try {
 		const {
-			user: { email },
+			user,
 			body: { oldPassword, newPassword },
 		} = req;
 
-		const currentUser = await User.findOne({ email }).exec();
+		const currentUser = await User.findById(user._id).exec();
 		const passwordIsValid = bcrypt.compareSync(
 			oldPassword,
 			currentUser.password
@@ -69,17 +69,12 @@ AuthUserRouter.patch('/updatepassword', async (req, res) => {
 AuthUserRouter.patch('/updateemail', async (req, res) => {
 	try {
 		const {
-			user: { email },
+			user,
 			body: { password, newEmail },
 		} = req;
 
-		const duplicateEmail = await User.findOne({ email: newEmail }).exec();
-		if (duplicateEmail !== null)
-			throw new DuplicateUserError(
-				'There is already an account with that email'
-			);
-
-		const currentUser = await User.findOne({ email }).exec();
+		// Validate user and check that email is not their current email
+		const currentUser = await User.findById(user._id).exec();
 		const passwordIsValid = bcrypt.compareSync(
 			password,
 			currentUser.password
@@ -87,6 +82,18 @@ AuthUserRouter.patch('/updateemail', async (req, res) => {
 
 		if (!passwordIsValid)
 			throw new InvalidCredentialError('Incorrect Password');
+
+		if (currentUser.email === newEmail)
+			throw new DuplicateUserError(
+				'New email should be different from current email'
+			);
+
+		// Check for other users with that email
+		const duplicateEmail = await User.findOne({ email: newEmail }).exec();
+		if (duplicateEmail !== null)
+			throw new DuplicateUserError(
+				'There is already an account with that email'
+			);
 
 		currentUser.email = newEmail;
 		currentUser.updatedAt = new Date();
@@ -108,6 +115,42 @@ AuthUserRouter.patch('/updateemail', async (req, res) => {
 				message: 'Unable to update email',
 			});
 		}
+	}
+});
+
+AuthUserRouter.delete('/deleteaccount', async (req, res) => {
+	try {
+		const {
+			user,
+			body: { password },
+		} = req;
+
+		// Validate user's password before deleting account
+		const userToDelete = await User.findById(user._id).exec();
+
+		// This shouldn't happen if the middleware works properly
+		if (userToDelete === null) throw new Error('User does not exist');
+
+		const passwordIsValid = bcrypt.compareSync(
+			password,
+			userToDelete.password
+		);
+
+		if (!passwordIsValid)
+			throw new InvalidCredentialError('Incorrect password');
+
+		await User.deleteOne({ _id: user._id });
+
+		res.status(204);
+	} catch (error) {
+		if (error.message === 'User does not exist') {
+			res.status(400).json({
+				error: error.message,
+			});
+		}
+		res.status(500).json({
+			error: 'Unable to delete user',
+		});
 	}
 });
 
