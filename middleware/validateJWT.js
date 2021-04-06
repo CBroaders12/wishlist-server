@@ -1,11 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-
-class InvalidCredentialError extends Error {
-	constructor(message) {
-		super(message);
-	}
-}
+const { InvalidCredentialError } = require('../errors');
 
 const validateJWTMiddleware = async (req, res, next) => {
 	if (req.method === 'OPTIONS') next();
@@ -14,11 +9,11 @@ const validateJWTMiddleware = async (req, res, next) => {
 		const { authorization } = req.headers;
 		const payload = jwt.verify(authorization, process.env.JWT_SECRET);
 
-		const currentUser = await User.findOne({ email: payload.email }).exec();
+		const currentUser = await User.findById(payload._id);
 
 		if (currentUser === null) throw new InvalidCredentialError();
 
-		res.user = currentUser;
+		req.user = currentUser;
 		next();
 	} catch (error) {
 		if (

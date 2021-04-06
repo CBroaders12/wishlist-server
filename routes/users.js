@@ -2,21 +2,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Router } = require('express');
 const { User } = require('../models');
+const { DuplicateUserError, InvalidCredentialError } = require('../errors');
 
 const UserRouter = Router();
-
-// Errors for User routes
-class DuplicateUserError extends Error {
-	constructor(message) {
-		super(message);
-	}
-}
-
-class InvalidCredentialError extends Error {
-	constructor(message) {
-		super(message);
-	}
-}
 
 /* Registration Router
     Method: POST
@@ -45,7 +33,7 @@ UserRouter.post('/register', async (req, res) => {
 		await newUser.save();
 
 		// Create a webtoken for the user
-		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+		const token = jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET, {
 			expiresIn: '12h',
 		});
 
@@ -92,7 +80,7 @@ UserRouter.post('/login', async (req, res) => {
 			throw new InvalidCredentialError('Incorrect email or password');
 		}
 
-		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+		const token = jwt.sign({ _id: loginUser._id }, process.env.JWT_SECRET, {
 			expiresIn: '12h',
 		});
 
@@ -112,17 +100,5 @@ UserRouter.post('/login', async (req, res) => {
 		}
 	}
 });
-
-// ! This needs to go behind middleware
-/* Reset Password
-	Method: PUT,
-	Route: /:id,
-	Request: {
-		token,
-		password,
-		email,
-	}
-*/
-UserRouter.patch('/password', (req, res) => {});
 
 module.exports = UserRouter;
