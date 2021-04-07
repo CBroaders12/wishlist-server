@@ -6,6 +6,11 @@ const { DuplicateUserError, InvalidCredentialError } = require('../errors');
 
 const UserRouter = Router();
 
+// Test route
+UserRouter.get('/', (req, res) => {
+	res.sendStatus(200);
+});
+
 /* Registration Router
     Method: POST
     Route: /register
@@ -18,6 +23,9 @@ const UserRouter = Router();
 UserRouter.post('/register', async (req, res) => {
 	try {
 		const { email, password } = req.body;
+
+		if (!email || !password)
+			throw new InvalidCredentialError('Provide username and password');
 
 		// Check for existing users with the same email
 		const existingUsers = await User.find({ email }).exec();
@@ -37,7 +45,7 @@ UserRouter.post('/register', async (req, res) => {
 			expiresIn: '12h',
 		});
 
-		res.status(200).json({
+		res.status(201).json({
 			message: 'User registered',
 			token,
 			user: {
@@ -45,7 +53,10 @@ UserRouter.post('/register', async (req, res) => {
 			},
 		});
 	} catch (error) {
-		if (error instanceof DuplicateUserError) {
+		if (
+			error instanceof DuplicateUserError ||
+			error instanceof InvalidCredentialError
+		) {
 			res.status(400).json({
 				error: error.message,
 			});
