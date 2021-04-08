@@ -82,6 +82,9 @@ UserRouter.post('/login', async (req, res) => {
 
 		const loginUser = await User.findOne({ email }).exec();
 
+		if (loginUser === null)
+			throw new InvalidCredentialError('Incorrect email or password');
+
 		const passwordIsValid = bcrypt.compareSync(
 			password,
 			loginUser.password

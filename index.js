@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const app = require('./server');
+const app = require('./app');
 const mongoose = require('mongoose');
 
 const startServer = async (port) => {
