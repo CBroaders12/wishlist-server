@@ -15,5 +15,6 @@ app.use('/users', routes.Users);
 
 // Verified Routes
 app.use('/authusers', middleware.validateJWT, routes.AuthUsers);
+app.use('/wishlists', middleware.validateJWT, routes.Wishlists);
 
 module.exports = app;
